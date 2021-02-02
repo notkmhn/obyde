@@ -1,0 +1,15 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+PyYAML = "*"
+
+[dev-packages]
+pylint = "*"
+autopep8 = "*"
+pipenv-setup = "*"
+
+[requires]
+python_version = "3.8"
