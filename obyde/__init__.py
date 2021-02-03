@@ -39,7 +39,7 @@ def find_files(dirpath, ext=''):
     index = defaultdict(set)
     def filefilter(f): return (ext and f.endswith(ext)) or (not ext)
 
-    for root, _, files in os.walk(dirpath):
+    for root, _, files in os.walk(dirpath, followlinks=False):
         filtered_files = filter(filefilter, files)
         for f in filtered_files:
             index[f].add(os.path.join(root, f))
