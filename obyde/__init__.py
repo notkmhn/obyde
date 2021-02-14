@@ -5,11 +5,14 @@ import argparse
 import sys
 import os
 import string
+import frontmatter
 from collections import defaultdict
 from .util import parse_obsidian_links, slugify_md_filename
 from hashlib import sha256
 
+
 __all__ = ['main']
+
 
 def parse_args():
     parser = argparse.ArgumentParser(prog=__package__,
@@ -28,17 +31,21 @@ def load_config(config_path):
         raise ValueError(
             'Failed to load configuration. Is the file path correct?')
 
+
 def dir_exists_or_raise(dirpath, dirpath_type):
     if not os.path.exists(dirpath) or not os.path.isdir(dirpath):
-        raise ValueError(f'{dirpath} - {dirpath_type} does not exist or is not a directory')
+        raise ValueError(
+            f'{dirpath} - {dirpath_type} does not exist or is not a directory')
     return dirpath
+
 
 def find_files(dirpath, ext='', exclusions=[]):
     dirpath = dir_exists_or_raise(dirpath, 'input files location')
     index = defaultdict(set)
 
     if exclusions:
-        exclusions = list(map(lambda exc: exc[:-1] if exc.endswith('/') else exc, exclusions))
+        exclusions = list(
+            map(lambda exc: exc[:-1] if exc.endswith('/') else exc, exclusions))
 
     def filefilter(f):
         correct_extension = (ext and f.endswith(ext)) or (not ext)
@@ -59,16 +66,18 @@ def find_files(dirpath, ext='', exclusions=[]):
     for x, p in index.items():
         if len(p) > 1:
             filenames = ','.join(p)
-            raise ValueError(f'Filename collision detected for {filenames}. This is currently not a supported operating mode.')
-    
+            raise ValueError(
+                f'Filename collision detected for {filenames}. This is currently not a supported operating mode.')
+
     cleaned_index = {}
 
     for x, p in index.items():
         cleaned_index[x] = p.pop()
 
     return cleaned_index
-    
-def rewrite_links(content, asset_index, relative_asset_variable):
+
+
+def rewrite_links(content, dated_file_index, asset_index, relative_asset_variable):
     obsidian_links = parse_obsidian_links(content)
     rewritten = content
     for link in obsidian_links:
@@ -82,13 +91,17 @@ def rewrite_links(content, asset_index, relative_asset_variable):
         for filename, filepaths in asset_index.items():
             oldpath, newpath = filepaths
             if link_target in filename or link_target in oldpath:
-                rewritten = rewritten.replace(link, f'[{link_text}]({{{{ {relative_asset_variable} }}}}/{newpath})')
+                rewritten = rewritten.replace(
+                    link, f'[{link_text}]({{{{ {relative_asset_variable} }}}}/{newpath})')
                 written = True
                 break
         if not written:
             link_name_slug = slugify_md_filename(link_target)
-            rewritten = rewritten.replace(link, f'[{link_text}]({{% post_url {link_name_slug} %}})')
+            dated_name, _, _ = dated_file_index[link_name_slug]
+            rewritten = rewritten.replace(
+                link, f'[{link_text}]({{% post_url {dated_name} %}})')
     return rewritten
+
 
 def write_asset_files(asset_files, asset_output_path):
     modified_file_paths = {}
@@ -105,24 +118,57 @@ def write_asset_files(asset_files, asset_output_path):
         modified_file_paths[name] = (path, hashed_fname)
     return modified_file_paths
 
+
+def validate_postdate(path, postdate):
+    if not postdate:
+        raise ValueError(
+            f'Post at {path} does not have a date, please add a date to the frontmatter.')
+
+    components = tuple(postdate.split('-'))
+    try:
+        assert len(components) == 3
+        year, month, day = components
+        for comp in [year, month, day]:
+            assert all(map(lambda x: x in string.digits, comp))
+    except AssertionError:
+        raise ValueError(
+            'Invalid frontmatter date format! Expected format is YYYY-MM-DD')
+    return postdate
+
+
 def process_vault(config):
-    md_files = find_files(config['vault']['path'], ext='.md', exclusions=config['vault'].get('excluded_directories', []))
+    md_files = find_files(config['vault']['path'], ext='.md',
+                          exclusions=config['vault'].get('excluded_directories', []))
     asset_files = find_files(config['vault']['asset_path'])
-    post_output_path = dir_exists_or_raise(config['output']['post_output_path'], 'post output path')
-    asset_output_path = dir_exists_or_raise(config['output']['asset_output_path'], 'asset output path')
+    post_output_path = dir_exists_or_raise(
+        config['output']['post_output_path'], 'post output path')
+    asset_output_path = dir_exists_or_raise(
+        config['output']['asset_output_path'], 'asset output path')
     relative_asset_variable = config['output'].get(
         'relative_asset_variable', 'site.assets_location')
 
     copied_asset_files = write_asset_files(asset_files, asset_output_path)
-    
+
+    dated_files = {}
     for name, path in md_files.items():
         name, ext = os.path.splitext(name)
-        slug_name = slugify_md_filename(name) + ext
+        slug_name = slugify_md_filename(name)
+        metadata = frontmatter.load(path)
+        postdate = validate_postdate(path, str(metadata.get('date', '')))
+        dated_name = postdate + '-' + slug_name
+        dated_name_ext = dated_name + ext
+        dated_files[slug_name] = (dated_name, dated_name_ext, path)
+
+    for slug_name, data in dated_files.items():
+        _, dated_name_ext, path = data
         with open(path, 'r') as fs:
-            rewritten = rewrite_links(fs.read(), copied_asset_files,
-                                        relative_asset_variable)
-        with open(os.path.join(post_output_path, slug_name),  'w') as out:
+            filedata = fs.read()
+            rewritten = rewrite_links(
+                filedata, dated_files, copied_asset_files, relative_asset_variable)
+
+        with open(os.path.join(post_output_path, dated_name_ext),  'w') as out:
             out.write(rewritten)
+
 
 def main():
     try:

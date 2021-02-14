@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 PyYAML = "*"
+python-frontmatter = "*"
 
 [dev-packages]
 pylint = "*"
