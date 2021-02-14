@@ -1,6 +1,8 @@
 vault:
         path: "/path/to/vault/root/"
         asset_path: "/path/to/vault/attachments/"
+        excluded_directories:
+                - .trash
 output:
         post_output_path: "/path/to/jekyll/_posts/"
         asset_output_path: "/path/to/jekyll/assets/"

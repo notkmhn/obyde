@@ -33,14 +33,26 @@ def dir_exists_or_raise(dirpath, dirpath_type):
         raise ValueError(f'{dirpath} - {dirpath_type} does not exist or is not a directory')
     return dirpath
 
-def find_files(dirpath, ext=''):
+def find_files(dirpath, ext='', exclusions=[]):
     dirpath = dir_exists_or_raise(dirpath, 'input files location')
-
     index = defaultdict(set)
-    def filefilter(f): return (ext and f.endswith(ext)) or (not ext)
+
+    if exclusions:
+        exclusions = list(map(lambda exc: exc[:-1] if exc.endswith('/') else exc, exclusions))
+
+    def filefilter(f):
+        correct_extension = (ext and f.endswith(ext)) or (not ext)
+        return correct_extension
+
+    def excluded_dir(d):
+        return any(map(lambda exc: exc in d or f'{exc}/' in d, exclusions))
 
     for root, _, files in os.walk(dirpath, followlinks=False):
         filtered_files = filter(filefilter, files)
+
+        if excluded_dir(root):
+            continue
+
         for f in filtered_files:
             index[f].add(os.path.join(root, f))
 
@@ -94,7 +106,7 @@ def write_asset_files(asset_files, asset_output_path):
     return modified_file_paths
 
 def process_vault(config):
-    md_files = find_files(config['vault']['path'], ext='.md')
+    md_files = find_files(config['vault']['path'], ext='.md', exclusions=config['vault'].get('excluded_directories', []))
     asset_files = find_files(config['vault']['asset_path'])
     post_output_path = dir_exists_or_raise(config['output']['post_output_path'], 'post output path')
     asset_output_path = dir_exists_or_raise(config['output']['asset_output_path'], 'asset output path')

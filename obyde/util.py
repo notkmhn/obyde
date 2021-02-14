@@ -33,7 +33,11 @@ def parse_obsidian_links(content):
                 else:
                     quotemult = 0
                     state = 'open'
-                    # If it is larger, then close first, open another block
+                    # If the number of ticks in a row is equal to or larger than the initial
+                    # number of ticks. Assume that the open block is now closed
+                    # with the initial number of ticks, and if there are any
+                    # more ticks remaining, they will get handled in the next
+                    # loop iteration.
                     incr += ltick if ltick == quotemult else quotemult
         else:
             if state == 'codestart':
