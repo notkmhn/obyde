@@ -4,3 +4,4 @@ vault:
 output:
         post_output_path: "/path/to/jekyll/_posts/"
         asset_output_path: "/path/to/jekyll/assets/"
+        relative_asset_variable: "site.assets_location"
