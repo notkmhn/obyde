@@ -1,9 +1,9 @@
 vault:
         path: "/path/to/vault/root/" # Path to the Obsidian vault root. Markdown file discovery will start at this directory recursively.
         asset_path: "/path/to/vault/attachments/" # Path to the Obsidian vault attachments folder
-        excluded_subdirectories: # List of excluded subdirectories of the Obsidian vault root
+        excluded_subdirectories: # Optional: list of excluded subdirectories of the Obsidian vault root
                 - .trash
 output:
         post_output_path: "/path/to/jekyll/_posts/" # Path to the Jekyll posts directory
         asset_output_path: "/path/to/jekyll/assets/" # Path to the blog assets directory, copied from the Obsidian attachments folder
-        relative_asset_variable: "site.blog_assets_location" # A Jekyll variable pointing to the relative URL prefix for blog assets without a trailing slash.
+        relative_asset_variable: "site.blog_assets_location" # Optional: a Jekyll variable pointing to the relative URL prefix for blog assets without a trailing slash.
