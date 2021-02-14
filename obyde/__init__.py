@@ -70,7 +70,7 @@ def rewrite_links(content, asset_index, relative_asset_variable):
         for filename, filepaths in asset_index.items():
             oldpath, newpath = filepaths
             if link_target in filename or link_target in oldpath:
-                rewritten = rewritten.replace(link, f'[{link_text}]({relative_asset_variable}/{newpath})')
+                rewritten = rewritten.replace(link, f'[{link_text}]({{{{ {relative_asset_variable} }}}}/{newpath})')
                 written = True
                 break
         if not written:
