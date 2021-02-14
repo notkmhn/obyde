@@ -41,4 +41,7 @@ output:
         relative_asset_variable: "site.blog_assets_location" # Optional: a Jekyll variable pointing to the relative URL prefix for blog assets without a trailing slash.
 ```
 
-Write your posts in the Obsidian vault then simply use `obyde -c <path to config.yaml>` to move the vault to the configured Jekyll blog directory.
+Write your posts in the Obsidian vault then move the vault to the configured Jekyll blog directory using
+```sh
+obyde -c <path to config.yaml>
+``` 
