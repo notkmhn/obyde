@@ -40,19 +40,20 @@ def dir_exists_or_raise(dirpath, dirpath_type):
 
 
 def find_files(dirpath, ext='', exclusions=[]):
+    dirpath = os.path.abspath(dirpath)
     dirpath = dir_exists_or_raise(dirpath, 'input files location')
     index = defaultdict(set)
 
     if exclusions:
         exclusions = list(
-            map(lambda exc: exc[:-1] if exc.endswith('/') else exc, exclusions))
+            map(lambda exc: os.path.join(dirpath, exc), exclusions))
 
     def filefilter(f):
         correct_extension = (ext and f.endswith(ext)) or (not ext)
         return correct_extension
 
     def excluded_dir(d):
-        return any(map(lambda exc: exc in d or f'{exc}/' in d, exclusions))
+        return any(map(lambda exc: exc in os.path.commonpath([exc, d]), exclusions))
 
     for root, _, files in os.walk(dirpath, followlinks=False):
         filtered_files = filter(filefilter, files)
@@ -138,7 +139,7 @@ def validate_postdate(path, postdate):
 
 def process_vault(config):
     md_files = find_files(config['vault']['path'], ext='.md',
-                          exclusions=config['vault'].get('excluded_directories', []))
+                          exclusions=config['vault'].get('excluded_subdirectories', []))
     asset_files = find_files(config['vault']['asset_path'])
     post_output_path = dir_exists_or_raise(
         config['output']['post_output_path'], 'post output path')
