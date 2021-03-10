@@ -6,4 +6,5 @@ vault:
 output:
         post_output_path: "/path/to/jekyll/_posts/" # Path to the Jekyll posts directory
         asset_output_path: "/path/to/jekyll/assets/" # Path to the blog assets directory, copied from the Obsidian attachments folder
-        relative_asset_variable: "site.blog_assets_location" # Optional: a Jekyll variable pointing to the relative URL prefix for blog assets without a trailing slash.
+        relative_asset_path_prefix: "{{ site.blog_assets_location }}" # Optional: a relative URL prefix for blog assets without a trailing slash. Can also be a liquid template substitution for Jekyll.
+        post_link_mode: "jekyll" # Optional, values can be either "jekyll" or "hugo" and the default is "jekyll". Sets the way post references are output.

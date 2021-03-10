@@ -78,7 +78,15 @@ def find_files(dirpath, ext='', exclusions=[]):
     return cleaned_index
 
 
-def rewrite_links(content, dated_file_index, asset_index, relative_asset_variable):
+def generate_post_link(dated_name, post_link_mode):
+    if post_link_mode == 'jekyll':
+        return f'{{% post_url {dated_name} %}}'
+    elif post_link_mode == 'hugo':
+        return f'{{{{< relref "{dated_name}" >}}}}'
+    else:
+        raise ValueError(f'Unknown post link mode: {post_link_mode}')
+
+def rewrite_links(content, dated_file_index, asset_index, relative_asset_path_prefix, post_link_mode):
     obsidian_links = parse_obsidian_links(content)
     rewritten = content
     for link in obsidian_links:
@@ -93,14 +101,14 @@ def rewrite_links(content, dated_file_index, asset_index, relative_asset_variabl
             oldpath, newpath = filepaths
             if link_target in filename or link_target in oldpath:
                 rewritten = rewritten.replace(
-                    link, f'[{link_text}]({{{{ {relative_asset_variable} }}}}/{newpath})')
+                    link, f'[{link_text}]({relative_asset_path_prefix}/{newpath})')
                 written = True
                 break
         if not written:
             link_name_slug = slugify_md_filename(link_target)
             dated_name, _, _ = dated_file_index[link_name_slug]
             rewritten = rewritten.replace(
-                link, f'[{link_text}]({{% post_url {dated_name} %}})')
+                link, f'[{link_text}]({generate_post_link(dated_name, post_link_mode)})')
     return rewritten
 
 
@@ -145,8 +153,11 @@ def process_vault(config):
         config['output']['post_output_path'], 'post output path')
     asset_output_path = dir_exists_or_raise(
         config['output']['asset_output_path'], 'asset output path')
-    relative_asset_variable = config['output'].get(
-        'relative_asset_variable', 'site.assets_location')
+    relative_asset_path_prefix = config['output'].get(
+        'relative_asset_path_prefix', '{{ site.assets_location }}')
+    post_link_mode = config['output'].get('post_link_mode', 'jekyll')
+    if not post_link_mode in ['jekyll', 'hugo']:
+        raise ValueError(f'Unknown post link mode "{post_link_mode}". must be set to either "jekyll" or "hugo".')
 
     copied_asset_files = write_asset_files(asset_files, asset_output_path)
 
@@ -165,7 +176,7 @@ def process_vault(config):
         with open(path, 'r') as fs:
             filedata = fs.read()
             rewritten = rewrite_links(
-                filedata, dated_files, copied_asset_files, relative_asset_variable)
+                filedata, dated_files, copied_asset_files, relative_asset_path_prefix, post_link_mode)
 
         with open(os.path.join(post_output_path, dated_name_ext),  'w') as out:
             out.write(rewritten)

@@ -1,6 +1,6 @@
 # obyde
 
-A minimal tool to convert a "standardly" configured [Obsidian](https://obsidian.md/) vault to a Jekyll-based blog.
+A minimal tool to convert a "standardly" configured [Obsidian](https://obsidian.md/) vault to a Jekyll or Hugo blog.
 
 ## Installation
 Install obyde using `pip`:
@@ -16,7 +16,7 @@ pipenv install git+https://github.com/khalednassar/obyde#egg=obyde
 ```
 
 ## Caveat
-`obyde` is mainly meant to support easy "default" Obsidian vault to Jekyll _blog_ conversions. This means that, by default, it will have to create Jekyll posts (normally under `_posts`), which require their filenames to have a "post date".
+`obyde` is mainly meant to support easy "default" Obsidian vault to Jekyll or Hugo _blog_ conversions and it does so in an opinionated way. In order to create posts in an easy fashion, it requires that post filenames have a "post date", this is mainly to align with Jekyll, but it is also nice to use for Hugo.
 This is done by utilizing frontmatter in the Obsidian markdown notes, which means that each note must have a frontmatter section with at least a date key-value pair as such:
 ```md
 ---
@@ -36,12 +36,13 @@ vault:
         excluded_subdirectories: # Optional: list of excluded subdirectories of the Obsidian vault root
                 - .trash
 output:
-        post_output_path: "/path/to/jekyll/_posts/" # Path to the Jekyll posts directory
+        post_output_path: "/path/to/jekyll/_posts/" # Path to the Jekyll or Hugo posts directory
         asset_output_path: "/path/to/jekyll/assets/" # Path to the blog assets directory, copied from the Obsidian attachments folder
-        relative_asset_variable: "site.blog_assets_location" # Optional: a Jekyll variable pointing to the relative URL prefix for blog assets without a trailing slash.
+        relative_asset_path_prefix: "{{ site.blog_assets_location }}" # Optional: a relative URL prefix for blog assets without a trailing slash. Can also be a liquid template substitution for Jekyll.
+        post_link_mode: "jekyll" # Optional, values can be either "jekyll" or "hugo" and the default is "jekyll". Sets the way post references are output.
 ```
 
-Write your posts in the Obsidian vault then move the vault to the configured Jekyll blog directory using
+Write your posts in the Obsidian vault then move the vault to the configured Jekyll or Hugo blog directory using
 ```sh
 obyde -c <path to config.yaml>
 ``` 
