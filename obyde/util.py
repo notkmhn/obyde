@@ -6,6 +6,7 @@ SLUG_TRANSLATION = str.maketrans(
 
 
 def slugify_md_filename(name):
+    name = name.strip()
     translated = name.translate(SLUG_TRANSLATION)
     return translated.lower()
 
