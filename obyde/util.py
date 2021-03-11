@@ -25,21 +25,19 @@ def parse_obsidian_links(content):
                 tick_mult = _substr_cond(content, idx, lambda _, y: y == '`')
                 quotemult = len(tick_mult)
                 state = 'codestart'
-                incr = len(tick_mult)
+                incr = quotemult
             elif state == 'code':
                 tick_mult = _substr_cond(content, idx, lambda _, y: y == '`')
                 ltick = len(tick_mult)
-                if ltick < quotemult:
-                    incr = ltick
-                else:
-                    quotemult = 0
+                # If the number of ticks in a row is equal to or larger than the initial
+                # number of ticks. Assume that the open block is now closed
+                # with the initial number of ticks, and if there are any
+                # more ticks remaining, they will get handled in the next
+                # loop iteration.
+                incr = ltick if ltick < quotemult else quotemult
+                if incr >= quotemult:
                     state = 'open'
-                    # If the number of ticks in a row is equal to or larger than the initial
-                    # number of ticks. Assume that the open block is now closed
-                    # with the initial number of ticks, and if there are any
-                    # more ticks remaining, they will get handled in the next
-                    # loop iteration.
-                    incr += ltick if ltick == quotemult else quotemult
+                quotemult = 0
         else:
             if state == 'codestart':
                 state = 'code'
