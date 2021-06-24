@@ -4,6 +4,7 @@ import yaml
 import argparse
 import sys
 import os
+import re
 import string
 import frontmatter
 from collections import defaultdict
@@ -86,6 +87,24 @@ def generate_post_link(dated_name, post_link_mode):
     else:
         raise ValueError(f'Unknown post link mode: {post_link_mode}')
 
+def find_replace(content, metadata):
+    find_list = metadata.get("find")
+    replace_list = metadata.get("replace")
+
+    if not (find_list and replace_list):
+        return content
+
+    if len(find_list) != len(replace_list):
+        raise ValueError(f'Length of with list is not the same as the length of the replace list')
+
+    rewritten = content
+    for i in range(len(find_list)):
+        find_regex = re.compile(find_list[i])
+        replace_string = replace_list[i]
+        rewritten = re.sub(find_regex,replace_string,rewritten)
+
+    return rewritten
+
 def rewrite_links(content, dated_file_index, asset_index, relative_asset_path_prefix, post_link_mode):
     obsidian_links = parse_obsidian_links(content)
     rewritten = content
@@ -106,9 +125,10 @@ def rewrite_links(content, dated_file_index, asset_index, relative_asset_path_pr
                 break
         if not written:
             link_name_slug = slugify_md_filename(link_target)
-            dated_name, _, _ = dated_file_index[link_name_slug]
-            rewritten = rewritten.replace(
-                link, f'[{link_text}]({generate_post_link(dated_name, post_link_mode)})')
+            dated_name, _, _ = dated_file_index.get(link_name_slug, (None, None, None))
+            if dated_name:
+                rewritten = rewritten.replace(
+                    link, f'[{link_text}]({generate_post_link(dated_name, post_link_mode)})')
     return rewritten
 
 
@@ -162,6 +182,7 @@ def process_vault(config):
     copied_asset_files = write_asset_files(asset_files, asset_output_path)
 
     dated_files = {}
+    metadata_map = {}
     for name, path in md_files.items():
         name, ext = os.path.splitext(name)
         slug_name = slugify_md_filename(name)
@@ -170,13 +191,15 @@ def process_vault(config):
         dated_name = postdate + '-' + slug_name
         dated_name_ext = dated_name + ext
         dated_files[slug_name] = (dated_name, dated_name_ext, path)
+        metadata_map[slug_name] = metadata
 
     for slug_name, data in dated_files.items():
         _, dated_name_ext, path = data
         with open(path, 'r') as fs:
             filedata = fs.read()
+            rewritten = find_replace(filedata, metadata_map[slug_name])
             rewritten = rewrite_links(
-                filedata, dated_files, copied_asset_files, relative_asset_path_prefix, post_link_mode)
+                rewritten, dated_files, copied_asset_files, relative_asset_path_prefix, post_link_mode)
 
         with open(os.path.join(post_output_path, dated_name_ext),  'w') as out:
             out.write(rewritten)
