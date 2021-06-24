@@ -87,6 +87,7 @@ def generate_post_link(dated_name, post_link_mode):
     else:
         raise ValueError(f'Unknown post link mode: {post_link_mode}')
 
+
 def find_replace(content, metadata):
     find_list = metadata.get("find")
     replace_list = metadata.get("replace")
@@ -95,15 +96,17 @@ def find_replace(content, metadata):
         return content
 
     if len(find_list) != len(replace_list):
-        raise ValueError(f'Length of with list is not the same as the length of the replace list')
+        raise ValueError(
+            f'Length of with list is not the same as the length of the replace list')
 
     rewritten = content
     for i in range(len(find_list)):
         find_regex = re.compile(find_list[i])
         replace_string = replace_list[i]
-        rewritten = re.sub(find_regex,replace_string,rewritten)
+        rewritten = re.sub(find_regex, replace_string, rewritten)
 
     return rewritten
+
 
 def rewrite_links(content, dated_file_index, asset_index, relative_asset_path_prefix, post_link_mode):
     obsidian_links = parse_obsidian_links(content)
@@ -125,7 +128,8 @@ def rewrite_links(content, dated_file_index, asset_index, relative_asset_path_pr
                 break
         if not written:
             link_name_slug = slugify_md_filename(link_target)
-            dated_name, _, _ = dated_file_index.get(link_name_slug, (None, None, None))
+            dated_name, _, _ = dated_file_index.get(
+                link_name_slug, (None, None, None))
             if dated_name:
                 rewritten = rewritten.replace(
                     link, f'[{link_text}]({generate_post_link(dated_name, post_link_mode)})')
@@ -177,32 +181,32 @@ def process_vault(config):
         'relative_asset_path_prefix', '{{ site.assets_location }}')
     post_link_mode = config['output'].get('post_link_mode', 'jekyll')
     if not post_link_mode in ['jekyll', 'hugo']:
-        raise ValueError(f'Unknown post link mode "{post_link_mode}". must be set to either "jekyll" or "hugo".')
+        raise ValueError(
+            f'Unknown post link mode "{post_link_mode}". must be set to either "jekyll" or "hugo".')
 
     copied_asset_files = write_asset_files(asset_files, asset_output_path)
 
     dated_files = {}
-    metadata_map = {}
+    post_map = {}
     for name, path in md_files.items():
         name, ext = os.path.splitext(name)
         slug_name = slugify_md_filename(name)
-        metadata = frontmatter.load(path)
-        postdate = validate_postdate(path, str(metadata.get('date', '')))
+        post = frontmatter.load(path)
+        postdate = validate_postdate(path, str(post.metadata.get('date', '')))
         dated_name = postdate + '-' + slug_name
         dated_name_ext = dated_name + ext
         dated_files[slug_name] = (dated_name, dated_name_ext, path)
-        metadata_map[slug_name] = metadata
+        post_map[slug_name] = post
 
     for slug_name, data in dated_files.items():
         _, dated_name_ext, path = data
-        with open(path, 'r') as fs:
-            filedata = fs.read()
-            rewritten = find_replace(filedata, metadata_map[slug_name])
-            rewritten = rewrite_links(
-                rewritten, dated_files, copied_asset_files, relative_asset_path_prefix, post_link_mode)
-
-        with open(os.path.join(post_output_path, dated_name_ext),  'w') as out:
-            out.write(rewritten)
+        post = post_map[slug_name]
+        rewritten = find_replace(post.content, post.metadata)
+        rewritten = rewrite_links(
+            rewritten, dated_files, copied_asset_files, relative_asset_path_prefix, post_link_mode)
+        post.content = rewritten
+        with open(os.path.join(post_output_path, dated_name_ext),  'wb') as out:
+            frontmatter.dump(post, out)
 
 
 def main():
