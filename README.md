@@ -46,3 +46,17 @@ Write your posts in the Obsidian vault then move the vault to the configured Jek
 ```sh
 obyde -c <path to config.yaml>
 ``` 
+
+### Options
+**Regex-based find and replace transformations**: (see PR [#1](https://github.com/khalednassar/obyde/pull/1)) can be done through the frontmatter by specifying a `find` regex list and a corresponding `replace` string list of the same length. Each `find` regex will be compiled to search and replace matching instances with the string that is at the same index in the `replace` list.
+
+For example, the following frontmatter configuraiton will replace every instance of `foo` with `baz` and every instance of `bar` and `bak` with `qux`:
+```yaml
+---
+find:
+  - foo
+  - ba(r|k)
+replace:
+  - baz
+  - qux
+```
