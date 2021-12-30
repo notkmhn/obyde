@@ -107,6 +107,11 @@ def find_replace(content, metadata):
 
     return rewritten
 
+def rewrite_highlights(content):
+    rewritten = content
+    regex_pattern = re.compile(r'==(.*)==')
+    rewritten = regex_pattern.sub(r'<mark>\1</mark>', content)
+    return rewritten
 
 def rewrite_links(content, dated_file_index, asset_index, relative_asset_path_prefix, post_link_mode):
     obsidian_links = parse_obsidian_links(content)
@@ -204,6 +209,7 @@ def process_vault(config):
         rewritten = find_replace(post.content, post.metadata)
         rewritten = rewrite_links(
             rewritten, dated_files, copied_asset_files, relative_asset_path_prefix, post_link_mode)
+        rewritten = rewrite_highlights(rewritten)
         post.content = rewritten
         with open(os.path.join(post_output_path, dated_name_ext),  'wb') as out:
             frontmatter.dump(post, out)
