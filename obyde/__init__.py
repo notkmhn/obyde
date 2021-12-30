@@ -201,9 +201,13 @@ def process_vault(config):
     for slug_name, data in dated_files.items():
         _, dated_name_ext, path = data
         post = post_map[slug_name]
-        rewritten = find_replace(post.content, post.metadata)
+
+        # Allow find_replace to run on metadata in addition to post content
+        post_text = find_replace(frontmatter.dumps(post), post.metadata)
+        post = frontmatter.loads(post_text)
+
         rewritten = rewrite_links(
-            rewritten, dated_files, copied_asset_files, relative_asset_path_prefix, post_link_mode)
+            post.content, dated_files, copied_asset_files, relative_asset_path_prefix, post_link_mode)
         post.content = rewritten
         with open(os.path.join(post_output_path, dated_name_ext),  'wb') as out:
             frontmatter.dump(post, out)
