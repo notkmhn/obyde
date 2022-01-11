@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
 
-import yaml
 import argparse
-import sys
 import os
 import re
 import string
-import frontmatter
+import sys
 from collections import defaultdict
-from .util import parse_obsidian_links, slugify_md_filename
 from hashlib import sha256
 
+import frontmatter
+import yaml
+
+from .parsing import parse_content_blocks
+from .rewriting import RewritingEngine, RewritingPipeline
+from .rewriting.highlight import ObsidianHighlightRewritingTransformer
+from .util import parse_obsidian_links, slugify_md_filename
 
 __all__ = ['main']
 
@@ -169,6 +173,19 @@ def validate_postdate(path, postdate):
     return postdate
 
 
+def rewrite_post_with_engine(engine: RewritingEngine, post):
+    post_content = post.content
+    post.content = ""
+    post_metadata = frontmatter.dumps(post)
+    post_content_blocks = parse_content_blocks(post_content)
+
+    post_metadata, post_content = engine.rewrite(
+        post_metadata, post_content_blocks)
+    post_text = "\n".join([post_metadata, post_content])
+    post = frontmatter.loads(post_text)
+    return post
+
+
 def process_vault(config):
     md_files = find_files(config['vault']['path'], ext='.md',
                           exclusions=config['vault'].get('excluded_subdirectories', []))
@@ -198,6 +215,11 @@ def process_vault(config):
         dated_files[slug_name] = (dated_name, dated_name_ext, path)
         post_map[slug_name] = post
 
+    rewriting_pipeline = RewritingPipeline([
+        ObsidianHighlightRewritingTransformer()
+    ])
+    rewrite_engine = RewritingEngine(transformer=rewriting_pipeline)
+
     for slug_name, data in dated_files.items():
         _, dated_name_ext, path = data
         post = post_map[slug_name]
@@ -205,6 +227,7 @@ def process_vault(config):
         # Allow find_replace to run on metadata in addition to post content
         post_text = find_replace(frontmatter.dumps(post), post.metadata)
         post = frontmatter.loads(post_text)
+        post = rewrite_post_with_engine(rewrite_engine, post)
 
         rewritten = rewrite_links(
             post.content, dated_files, copied_asset_files, relative_asset_path_prefix, post_link_mode)
