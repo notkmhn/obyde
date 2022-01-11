@@ -23,7 +23,7 @@ setup(
     author="Khaled Nassar",
     packages=find_packages(exclude=["contrib", "docs", "tests"]),
     python_requires=">=3.8",
-    install_requires=["python-frontmatter==0.5.0", "pyyaml==5.4.1", "six==1.15.0"],
+    install_requires=["python-frontmatter==1.0.0", "pyyaml==6.0"],
     dependency_links=[],
     entry_points={"console_scripts": ["obyde=obyde:main"]},
 )

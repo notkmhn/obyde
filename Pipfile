@@ -11,6 +11,7 @@ python-frontmatter = "*"
 pylint = "*"
 autopep8 = "*"
 pipenv-setup = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.8"
