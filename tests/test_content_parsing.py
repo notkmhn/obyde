@@ -1,4 +1,6 @@
-from obyde.parsing import parse_content_blocks, ContentBlock, PreformattedContentBlock
+import pytest
+from obyde.parsing import (ContentBlock, PreformattedContentBlock,
+                           parse_content_blocks)
 
 
 def test_parse_no_prefromatted_blocks():
@@ -12,6 +14,7 @@ def test_parse_no_prefromatted_blocks():
     assert len(blocks) == 1
     assert isinstance(blocks[0], ContentBlock)
     assert blocks[0].content == content
+
 
 def test_parse_preformatted_block_at_end():
     plain_content = """Lorem Ipsum is simply dummy text of the printing and typesetting industry.
@@ -30,6 +33,7 @@ def test_parse_preformatted_block_at_end():
     assert blocks[0].content == plain_content
     assert blocks[1].content == preformatted_content
 
+
 def test_parse_inline_preformatted_block():
     plain_content_1 = "This is the start of the content."
     plain_content_2 = "Still on the same line."
@@ -44,6 +48,7 @@ def test_parse_inline_preformatted_block():
     assert blocks[1].content == preformatted_content
     assert blocks[2].content == plain_content_2
 
+
 def test_parse_interleaved_preformatted_blocks():
     plain_content = [
         ContentBlock("This is a plain sentence."),
@@ -51,12 +56,16 @@ def test_parse_interleaved_preformatted_blocks():
         ContentBlock("Another plain block with [[an Obsidian link]]")
     ]
     preformatted_content = [
-        PreformattedContentBlock("This is a preformatted block", wrapping_tick_count=1),
-        PreformattedContentBlock("This is another preformatted block", wrapping_tick_count=2),
-        PreformattedContentBlock("assert a == b and b == a", wrapping_tick_count=3)
+        PreformattedContentBlock(
+            "This is a preformatted block", wrapping_tick_count=1),
+        PreformattedContentBlock(
+            "This is another preformatted block", wrapping_tick_count=2),
+        PreformattedContentBlock(
+            "assert a == b and b == a", wrapping_tick_count=3)
     ]
 
-    expected_content_blocks = [block for pair in zip(plain_content, preformatted_content) for block in pair]
+    expected_content_blocks = [block for pair in zip(
+        plain_content, preformatted_content) for block in pair]
     content = ""
     for block in expected_content_blocks:
         addition = block.content
@@ -70,3 +79,38 @@ def test_parse_interleaved_preformatted_blocks():
     for block, expected in zip(blocks, expected_content_blocks):
         assert isinstance(block, type(expected))
         assert block.content == expected.content
+
+
+def test_parse_preformatted_block_with_non_closing_ticks():
+    preformatted_content = "This is a preformatted block with `non-closing ticks` in its content"
+    expected = PreformattedContentBlock(
+        content=preformatted_content, wrapping_tick_count=3)
+    ticks = "`" * expected.wrapping_tick_count
+    content = f"{ticks}{preformatted_content}{ticks}"
+
+    blocks = parse_content_blocks(content)
+    assert len(blocks) == 1
+    assert isinstance(blocks[0], PreformattedContentBlock)
+    assert blocks[0].content == preformatted_content
+
+
+def test_parse_only_preformatted_content():
+    preformatted_content = "This is a preformatted content block."
+    expected = PreformattedContentBlock(
+        content=preformatted_content, wrapping_tick_count=3)
+    ticks = "`" * expected.wrapping_tick_count
+    content = f"{ticks}{preformatted_content}{ticks}"
+
+    blocks = parse_content_blocks(content)
+    assert len(blocks) == 1
+    assert isinstance(blocks[0], PreformattedContentBlock)
+    assert blocks[0].content == preformatted_content
+
+
+def test_parse_empty_unterminated_preformatted_content():
+    plain = ContentBlock(content="This is a plain block.")
+    ticks = "`" * 1
+    content = f"{plain.content}{ticks}"
+
+    with pytest.raises(ValueError):
+        parse_content_blocks(content)
