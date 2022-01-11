@@ -29,8 +29,9 @@ def parse_content_blocks(content: str) -> List[ContentBlock]:
                 quotemult = len(tick_mult)
                 state = 'codestart'
                 incr = quotemult
-                blocks.append(ContentBlock(content=buffer.getvalue()))
-                buffer = StringIO()
+                if buffer.tell() > 0:
+                    blocks.append(ContentBlock(content=buffer.getvalue()))
+                    buffer = StringIO()
             elif state == 'code':
                 tick_mult = _substr_cond(content, idx, lambda _, y: y == '`')
                 ltick = len(tick_mult)
@@ -42,12 +43,14 @@ def parse_content_blocks(content: str) -> List[ContentBlock]:
                 incr = ltick if ltick < quotemult else quotemult
                 if incr >= quotemult:
                     state = 'open'
+                    # Preformatted content blocks can never be empty
+                    # this would otherwise be an unterminated block
                     blocks.append(PreformattedContentBlock(
                         content=buffer.getvalue(), wrapping_tick_count=quotemult))
                     buffer = StringIO()
+                    quotemult = 0
                 else:
                     buffer.write(c)
-                quotemult = 0
         else:
             if state == 'codestart':
                 state = 'code'
@@ -55,12 +58,12 @@ def parse_content_blocks(content: str) -> List[ContentBlock]:
 
         idx += incr
 
+    if state == 'code' or state == 'codestart':
+            raise ValueError('Unterminated preformatted content block.')
+
     final_block = buffer.getvalue()
     if final_block:
-        if state == 'code' or state == 'codestart':
-            raise ValueError('Unterminated preformatted content block.')
-        else:
-            blocks.append(ContentBlock(content=final_block))
+        blocks.append(ContentBlock(content=final_block))
     return blocks
 
 
