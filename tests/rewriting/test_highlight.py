@@ -20,7 +20,14 @@ def test_highlight_does_not_modify_content_blocks_with_no_highlights():
 
 def test_highlight_markup_content_block():
     content = "This is a normal content block with ==highlighted text==."
-    excpected = "This is a normal content block with <mark>highlighted text</mark>."
+    expected = "This is a normal content block with <mark>highlighted text</mark>."
     highlighter = ObsidianHighlightRewritingTransformer()
     highlighted = highlighter.transform_normal_block(content)
-    assert highlighted == excpected
+    assert highlighted == expected
+
+def test_highlight_content_spans_new_lines():
+    content = "This is a content block with ==highlighted text\nspanning multiple lines=="
+    expected = "This is a content block with <mark>highlighted text\nspanning multiple lines</mark>"
+    highlighter = ObsidianHighlightRewritingTransformer()
+    highlighted = highlighter.transform_normal_block(content)
+    assert highlighted == expected
