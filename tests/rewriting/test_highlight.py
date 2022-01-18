@@ -9,7 +9,7 @@ def test_highlight_does_not_modify_preformatted_blocks():
 def test_highlight_does_not_modify_metadata_blocks():
     metadata = '---\ndate: 2021-08-21\ntitle: "== title =="'
     highlighter = ObsidianHighlightRewritingTransformer()
-    highlighted = highlighter.transform_preformatted_block(metadata)
+    highlighted = highlighter.transform_metadata_section(metadata)
     assert highlighted is None
 
 def test_highlight_does_not_modify_content_blocks_with_no_highlights():
