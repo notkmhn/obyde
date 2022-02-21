@@ -5,7 +5,7 @@ from .model import RewritingTransformer
 
 
 class ObsidianHighlightRewritingTransformer(RewritingTransformer):
-    HIGHLIGHT_REGEX = re.compile(r"==(.*)==", flags=re.DOTALL)
+    HIGHLIGHT_REGEX = re.compile(r"==(.*?)==", flags=re.DOTALL)
 
     def transform_normal_block(self, block: str) -> Optional[str]:
         transformed, count = self.HIGHLIGHT_REGEX.subn(r"<mark>\1</mark>", block)
