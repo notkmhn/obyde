@@ -16,7 +16,7 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="obyde",
-    version="0.2.0",
+    version="0.2.1",
     description="A simple tool to convert a collection of markdown notes to Jekyll or Hugo posts. Mainly aimed at Obsidian vaults.",
     long_description_content_type="text/markdown",
     url="https://github.com/khalednassar/obyde",
