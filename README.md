@@ -6,13 +6,13 @@ A minimal tool to convert a "standardly" configured [Obsidian](https://obsidian.
 Install obyde using `pip`:
 
 ```sh
-pip install git+https://github.com/khalednassar/obyde
+pip install git+https://github.com/notkmhn/obyde
 ```
 
 Or using `pipenv`:
 
 ```sh
-pipenv install git+https://github.com/khalednassar/obyde#egg=obyde
+pipenv install git+https://github.com/notkmhn/obyde#egg=obyde
 ```
 
 ## Caveat
